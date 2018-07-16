@@ -1,24 +1,37 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using NeuralParticles.Entities;
+using System.Collections.Generic;
 
 namespace NeuralParticles
 {
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
-    public class Game1 : Game
+    public class NeuralParticles : Game
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        public Game1()
+        // ------------------------------------------------------------
+
+        int numberOfParticles = 100;
+        int numberOfParticleMoves = 1000;
+        List<Particle> Particles = new List<Particle>();
+
+        Vector2 ParticleStartingPosition;
+
+        // ------------------------------------------------------------
+
+        public NeuralParticles()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 
             graphics.PreferredBackBufferHeight = 900;
             graphics.PreferredBackBufferWidth = 900;
+            graphics.ApplyChanges();
         }
 
         /// <summary>
@@ -30,6 +43,15 @@ namespace NeuralParticles
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+
+            ParticleStartingPosition = new Vector2(graphics.PreferredBackBufferWidth / 2, graphics.PreferredBackBufferHeight - 100);
+
+            // create particles
+            for (int i = 0; i < numberOfParticles; i++)
+            {
+                Particles.Add(new Particle(ParticleStartingPosition, numberOfParticleMoves));
+            }
+
 
             base.Initialize();
         }
@@ -66,6 +88,10 @@ namespace NeuralParticles
                 Exit();
 
             // TODO: Add your update logic here
+            foreach (var particle in Particles)
+            {
+                particle.Update();
+            }
 
             base.Update(gameTime);
         }
@@ -78,7 +104,15 @@ namespace NeuralParticles
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
+            spriteBatch.Begin();
+
             // TODO: Add your drawing code here
+            foreach (var particle in Particles)
+            {
+                particle.Draw(spriteBatch);
+            }
+
+            spriteBatch.End();
 
             base.Draw(gameTime);
         }
