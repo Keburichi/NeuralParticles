@@ -46,6 +46,8 @@
     <Compile Include="Entities\ParticleBrain.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="Helper\Bounds.cs" />
+    <Compile Include="Helper\ParticlePerformance.cs" />
+    <Compile Include="Helper\RNG.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

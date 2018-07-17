@@ -1,25 +1,30 @@
 ﻿using Microsoft.Xna.Framework;
+using NeuralParticles.Helper;
 using System;
 
 namespace NeuralParticles.Entities
 {
     public class ParticleBrain
     {
-        int Step;
-        Vector2[] Directions;
-        Random rng = new Random();
+        public int Step;
+        public Vector2[] Directions;
+        //Random rng = new Random();
 
         public ParticleBrain(int numberOfDirections)
         {
             Directions = new Vector2[numberOfDirections];
+            Randomize();
         }
 
         private void Randomize()
         {
             for (int i = 0; i < Directions.Length; i++)
             {
-                var randomAngle = rng.Next(0, 360);
-                Directions[i] = new Vector2(randomAngle);
+                Directions[i] = new Vector2
+                {
+                    X = (float)Math.Cos(RNG.rng.Next(360)),
+                    Y = (float)Math.Sin(RNG.rng.Next(360))
+                };
             }
         }
 
@@ -44,8 +49,11 @@ namespace NeuralParticles.Entities
             {
                 if (rando.Next(0, 100) < mutationChance)
                 {
-                    var randomAngle = rng.Next(0, 360);
-                    Directions[i] = new Vector2(randomAngle);
+                    Directions[i] = new Vector2
+                    {
+                        X = (float)Math.Cos(RNG.rng.Next(360)),
+                        Y = (float)Math.Sin(RNG.rng.Next(360))
+                    };
                 }
             }
         }

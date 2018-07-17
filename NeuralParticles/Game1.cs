@@ -2,7 +2,9 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using NeuralParticles.Entities;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace NeuralParticles
 {
@@ -16,11 +18,21 @@ namespace NeuralParticles
 
         // ------------------------------------------------------------
 
+        int generation = 0;
+
+        // ------------------------------------------------------------
+
         int numberOfParticles = 100;
         int numberOfParticleMoves = 1000;
         List<Particle> Particles = new List<Particle>();
 
         Vector2 ParticleStartingPosition;
+
+        // ------------------------------------------------------------
+
+        Goal goal;
+        Vector2 goalPosition;
+        Vector2 goalSize = new Vector2(10, 10);
 
         // ------------------------------------------------------------
 
@@ -44,6 +56,10 @@ namespace NeuralParticles
         {
             // TODO: Add your initialization logic here
 
+            // Ziel initialisieren
+            goalPosition = new Vector2(graphics.PreferredBackBufferWidth / 2, 100);
+            goal = new Goal(goalPosition, goalSize);
+
             ParticleStartingPosition = new Vector2(graphics.PreferredBackBufferWidth / 2, graphics.PreferredBackBufferHeight - 100);
 
             // create particles
@@ -51,7 +67,6 @@ namespace NeuralParticles
             {
                 Particles.Add(new Particle(ParticleStartingPosition, numberOfParticleMoves));
             }
-
 
             base.Initialize();
         }
@@ -88,12 +103,42 @@ namespace NeuralParticles
                 Exit();
 
             // TODO: Add your update logic here
-            foreach (var particle in Particles)
+            foreach (var particle in Particles.Where(x => x.Alive))
             {
                 particle.Update();
+
+                // Prüfen ob Wand berührt wird
+                if (CollidesWithWall(particle.GetBounds()))
+                    particle.Alive = false;
+
+                // Prüfen ob particle am ziel ist
+                if (goal.IsColliding(particle))
+                    particle.ReachedGoal = true;
             }
 
+            // Prüfen ob alle Particle tot sind oder Ziel erreicht haben
+            if (Particles.All(x => !x.Alive || x.ReachedGoal))
+                NextGen();
+
             base.Update(gameTime);
+        }
+
+        private void NextGen()
+        {
+            foreach (var particle in Particles)
+            {
+                particle.CalculateFitness(goal.GetCenter());
+            }
+
+            var bestParticle = Particles.OrderByDescending(x => x.Fitness).First();
+            bestParticle.Best = true;
+            Console.WriteLine($"Best Particle had a fitness of: {bestParticle.Fitness}");
+        }
+
+        private bool CollidesWithWall(Rectangle bounds)
+        {
+            //if()
+            return false;
         }
 
         /// <summary>
@@ -105,6 +150,11 @@ namespace NeuralParticles
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             spriteBatch.Begin();
+
+            // Ziel zeichnen
+            goal.Draw(spriteBatch);
+
+            //spriteBatch.DrawString(SpriteFont.Glyph(), $"Generation: {generation}", new Vector2(20, 20), Color.Black);
 
             // TODO: Add your drawing code here
             foreach (var particle in Particles)
