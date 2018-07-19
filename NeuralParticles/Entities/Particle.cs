@@ -16,6 +16,7 @@ namespace NeuralParticles.Entities
             }
         }
         private Vector2 _position;
+        private Vector2 InitialPosition;
 
         private Vector2 Size = new Vector2(10, 10);
 
@@ -23,11 +24,12 @@ namespace NeuralParticles.Entities
         private Vector2 Velocity;
         private Rectangle Bounds;
 
-        public double Fitness;
+        public int Fitness;
 
         private Color Color = Color.Black;
         private Color ColorDeath = Color.Red;
-        private Color ColorReached = Color.LightGoldenrodYellow;
+        private Color ColorReached = Color.Yellow;
+        private Color ColorBest = Color.BlueViolet;
 
         private Texture2D Texture;
 
@@ -54,6 +56,7 @@ namespace NeuralParticles.Entities
 
         public Particle(Vector2 position, int numberOfMoves)
         {
+            this.InitialPosition = position;
             this.Position = position;
             Brain = new ParticleBrain(numberOfMoves);
         }
@@ -65,7 +68,7 @@ namespace NeuralParticles.Entities
 
         private Color GetColor()
         {
-            return Best ? ColorReached : Alive ? Color : ColorDeath;
+            return ReachedGoal ? ColorReached : Best ? ColorBest : Alive ? Color : ColorDeath;
         }
 
         private void UpdateTexture()
@@ -78,12 +81,12 @@ namespace NeuralParticles.Entities
         {
             // Wenn das Ziel erreicht wurde, dann gebe einen Fitnessscore anhand der verwendeten schritte
             if (ReachedGoal)
-                Fitness = 1.0 / 16.0 + 10000.0 / (float)(Brain.Step * Brain.Step);
+                Fitness = 10000000 / (int)(16.0 + 10000.0 / (int)(Brain.Step * Brain.Step));
             else
             {
                 // Wenn das Ziel nicht erreicht wurde, dann anhand von Distanz errechnen
                 var distanceToGoal = Vector2.Distance(goalPosition, Position);
-                Fitness = 1.0 / (distanceToGoal * distanceToGoal);
+                Fitness = 10000000/ ((int)distanceToGoal * (int)distanceToGoal);
             }
 
             // Wenn vorzeitig in eine Wand geraten, dann keine Fitness, da schlecht?
@@ -93,10 +96,21 @@ namespace NeuralParticles.Entities
 
         public Particle Clone()
         {
-            var clone = new Particle();
+            // Neuem Particle den Ursprungsort mitgeben, damit dieser am gleichen Punkt startet
+            var clone = new Particle(InitialPosition, Brain.Directions.Length);
             clone.Brain = Brain.Clone();
 
             return clone;
+        }
+
+        public int GetUsedSteps()
+        {
+            return Brain.Step;
+        }
+
+        public void MutateBrain()
+        {
+            Brain.Mutate();
         }
 
         public void Update()

@@ -20,10 +20,16 @@ namespace NeuralParticles.Entities
         {
             for (int i = 0; i < Directions.Length; i++)
             {
+                //Directions[i] = new Vector2
+                //{
+                //    X = (float)Math.Cos(RNG.rng.Next(360)) * 3,
+                //    Y = (float)Math.Sin(RNG.rng.Next(360)) * 3
+                //};
+
                 Directions[i] = new Vector2
                 {
-                    X = (float)Math.Cos(RNG.rng.Next(360)),
-                    Y = (float)Math.Sin(RNG.rng.Next(360))
+                    X = RNG.rng.Next(-5, 5),
+                    Y = RNG.rng.Next(-5, 5),
                 };
             }
         }
@@ -49,11 +55,18 @@ namespace NeuralParticles.Entities
             {
                 if (rando.Next(0, 100) < mutationChance)
                 {
+                    //Directions[i] = new Vector2
+                    //{
+                    //    X = (float)Math.Cos(RNG.rng.Next(360)) * 3,
+                    //    Y = (float)Math.Sin(RNG.rng.Next(360)) * 3
+                    //};
+
                     Directions[i] = new Vector2
                     {
-                        X = (float)Math.Cos(RNG.rng.Next(360)),
-                        Y = (float)Math.Sin(RNG.rng.Next(360))
+                        X = RNG.rng.Next(-5, 5),
+                        Y = RNG.rng.Next(-5, 5),
                     };
+
                 }
             }
         }

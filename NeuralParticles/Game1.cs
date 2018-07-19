@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using NeuralParticles.Entities;
+using NeuralParticles.Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,12 +20,13 @@ namespace NeuralParticles
         // ------------------------------------------------------------
 
         int generation = 0;
+        int FitnessSum = 0;
 
         // ------------------------------------------------------------
 
         int numberOfParticles = 100;
         int numberOfParticleMoves = 1000;
-        List<Particle> Particles = new List<Particle>();
+        Particle[] Particles;
 
         Vector2 ParticleStartingPosition;
 
@@ -55,6 +57,7 @@ namespace NeuralParticles
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            Particles = new Particle[numberOfParticles];
 
             // Ziel initialisieren
             goalPosition = new Vector2(graphics.PreferredBackBufferWidth / 2, 100);
@@ -65,7 +68,7 @@ namespace NeuralParticles
             // create particles
             for (int i = 0; i < numberOfParticles; i++)
             {
-                Particles.Add(new Particle(ParticleStartingPosition, numberOfParticleMoves));
+                Particles[i] = new Particle(ParticleStartingPosition, numberOfParticleMoves);
             }
 
             base.Initialize();
@@ -102,8 +105,32 @@ namespace NeuralParticles
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            var highestFitness = 0;
+            var bestParticleIndex = 0;
+
+            //for (int i = 0; i < Particles.Where(x => x.Alive).Count(); i++)
+            //{
+            //    Particles[i].Update();
+
+            //    // Prüfen ob Wand berührt wird
+            //    if (CollidesWithWall(Particles[i].GetBounds()))
+            //        Particles[i].Alive = false;
+
+            //    // Prüfen ob particle am ziel ist
+            //    if (goal.IsColliding(Particles[i]))
+            //        Particles[i].ReachedGoal = true;
+
+            //    Particles[i].CalculateFitness(goal.GetCenter());
+
+            //    if (Particles[i].Fitness > highestFitness)
+            //    {
+            //        Console.WriteLine($"New best particle with fitness: {Particles[i].Fitness} and index: {i}");
+            //        bestParticleIndex = i;
+            //    }
+            //}
+
             // TODO: Add your update logic here
-            foreach (var particle in Particles.Where(x => x.Alive))
+            foreach (var particle in Particles.Where(x => x.Alive && !x.ReachedGoal))
             {
                 particle.Update();
 
@@ -125,20 +152,86 @@ namespace NeuralParticles
 
         private void NextGen()
         {
+            FitnessSum = 0;
+
             foreach (var particle in Particles)
             {
+                particle.Best = false;
                 particle.CalculateFitness(goal.GetCenter());
+                FitnessSum += particle.Fitness;
             }
 
             var bestParticle = Particles.OrderByDescending(x => x.Fitness).First();
             bestParticle.Best = true;
             Console.WriteLine($"Best Particle had a fitness of: {bestParticle.Fitness}");
+
+            var soManyBestParticles = Particles.Where(x => x.Best).Count();
+            Console.WriteLine($"So many best Particles exist: {soManyBestParticles}");
+
+            // Prüfen ob Ziel erreicht wurde, wenn ja, dann maximale anzahl an schritten verringern, damit nächsten besser sein müssen
+            // wenn ziel nicht erreicht, dann mehr schritte geben
+            if (bestParticle.ReachedGoal)
+                numberOfParticleMoves = bestParticle.GetUsedSteps();
+            else
+                numberOfParticleMoves += (int)(numberOfParticleMoves * 0.1);
+
+            NaturalSelection();
+            MutateNewParticles();
+
+            generation++;
+            Console.WriteLine($"Starting new run with generation: {generation} and {numberOfParticleMoves} number of steps.");
+        }
+
+        private void MutateNewParticles()
+        {
+            for (int i = 1; i < numberOfParticles; i++)
+            {
+                Particles[i].MutateBrain();
+            }
+        }
+
+        private void NaturalSelection()
+        {
+            Particle[] newParticles = new Particle[numberOfParticles]; // Next gen!!!!!
+            newParticles[0] = Particles.FirstOrDefault(x => x.Best).Clone();
+            newParticles[0].Best = true;
+
+            for (int i = 1; i < newParticles.Length; i++)
+            {
+                // Parent anhand fitness finden
+                var parent = SelectParent();
+
+                newParticles[i] = parent.Clone();
+            }
+
+            newParticles.CopyTo(Particles, 0);
+        }
+
+        private Particle SelectParent()
+        {
+            var rand = RNG.rng.Next(FitnessSum);
+
+            long runningSum = 0;
+
+            for (int i = 0; i < Particles.Length; i++)
+            {
+                runningSum += Particles[i].Fitness;
+                if(runningSum > rand)
+                {
+                    return Particles[i];
+                }
+            }
+
+            // Sollte niemals erreicht werden
+            return null;
         }
 
         private bool CollidesWithWall(Rectangle bounds)
         {
-            //if()
-            return false;
+            if (bounds.Left < 0 || bounds.Right > graphics.PreferredBackBufferWidth || bounds.Top < 0 || bounds.Bottom > graphics.PreferredBackBufferHeight)
+                return true;
+            else
+                return false;
         }
 
         /// <summary>
